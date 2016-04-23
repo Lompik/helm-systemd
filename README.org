@@ -1,0 +1,21 @@
+#+TITLE: helm interface to interact woth systemd units
+
+This package lets you Start/Restart/Stop and view status of systemd's units with helm.
+
+Main keys are ~tab~ to select either of Start/Restart/Stop and ~C-j~ to view the selected unit status in a special buffer. User's unit comes in a separate source, ~C-o~ to switch to the latter. Systemd's unit type (service, timers, mount, etc) can be circled with ~C-[~ and ~C-]~.
+* Screenshot
+[[./Images/]]
+[[file:./Images/2016-04-23-11:11:38_2160x1327+0+24.png]]
+* Configuration
+
+| variable                     | description                            |
+|------------------------------+----------------------------------------|
+| helm-systemd-list-all        | Pass "--all" argument to systemd       |
+| helm-systemd-list-not-loaded | also show unit that are not yet loaded |
+If you don't see some units, set those 2 variables to ~t~.
+
+* TODO
+Ideas for improvement goes here.
+  - Provide feedback on systemd restart/stop status
+  - persistent restart/stop actions
+  - async action, especially restart
