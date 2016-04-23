@@ -4,7 +4,7 @@
 
 ;; Author:  <lompik@oriontabArch>
 ;; Package-Version: 0.0.1
-;; Package-Requires: ((emacs "24.4") (helm "1.9.2") (with-editor))
+;; Package-Requires: ((emacs "24.4") (helm "1.9.2") (with-editor "20160408.201"))
 ;; Keywords: convenience
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -27,6 +27,9 @@
 ;;; Code:
 
 (require 'cl)
+(require 'helm)
+(require 'with-editor)
+(require 'subr-x)
 
 (defvar helm-systemd-command-types '("service" "timer" "mount" "target" "socket" "scope" "device"))
 (defvar helm-systemd-list-all nil)
@@ -74,10 +77,10 @@
              (delq nil word-list)
              " "))
 
-(defun sysd-systemctl-command (&rest options)
-  "Construct string with: 'systemctl default-options' options"
-  (concatspace (add-to-list 'options
-                            (concat "systemctl " (sysd-command-line-option))) ))
+(defun sysd-systemctl-command (&rest args)
+  "Construct string with: 'systemctl default-args' ARGS"
+  (concatspace (push (concat "systemctl " (sysd-command-line-option))
+                     args) ))
 
 (defun get-sd-canditates (sysd-options)
   "Return a list of systemd service unit"
@@ -164,7 +167,7 @@
   (let ((unit (car (split-string line))))
     (sysd-display "status" unit isuser )))
 
-(defun sysd-transformer (candidates _source)
+(defun sysd-transformer (candidates source)
   (let ((res candidates))
     (unless (string= (car helm-systemd-command-types) "device")
 
@@ -183,7 +186,7 @@
                                                                (shell-command-to-string
                                                                 (concatspace `("systemctl" "is-enabled "
                                                                                ,(if (string-match "User"
-                                                                                                  (cdr (assoc 'name _source)))
+                                                                                                  (cdr (assoc 'name source)))
                                                                                     "--user")
                                                                                ,unit))))))
                                               (propena (cond ((string= isenabled "enabled") 'helm-bookmark-info)
@@ -263,6 +266,7 @@
 
     :filtered-candidate-transformer #'sysd-transformer))
 
+;;;###autoload
 (defun helm-systemd ()
   (interactive)
   (helm
