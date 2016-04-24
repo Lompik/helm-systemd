@@ -180,7 +180,7 @@
                          for loaded = (nth 1 split)
                          for active = (nth 2 split)
                          for running = (nth 3 split)
-                         for description = (if running (helm-systemd-concatspace (subseq split 4)))
+                         for description = (if running (helm-systemd-concatspace (cl-subseq split 4)))
                          collect (let ((line i))
                                    (unless (and unit loaded active running description)
                                      line)
