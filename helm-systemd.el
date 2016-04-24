@@ -162,10 +162,13 @@
   (with-helm-alive-p
     (helm-force-update )))
 
-(defun helm-system-persis-action (line &optional isuser)
+(defun helm-system-persis-action (_line &optional isuser)
   "Show unit status"
-  (let ((unit (car (split-string line))))
-    (helm-systemd-display "status" unit isuser )))
+  (let ((units (helm-marked-candidates)))
+    (mapc (lambda (line)
+            (let ((unit (car (split-string line))))
+              (helm-systemd-display "status" unit isuser )))
+          units)))
 
 (defun helm-systemd-transformer (candidates source)
   (let ((res candidates))
@@ -225,19 +228,24 @@
                                    line ))))
     res))
 
+(defmacro helm-systemd-make-actions (sysd-verb isuser)
+  `(lambda (_ignore)
+     (mapc (lambda (candidate)
+             (message candidate)
+             (helm-systemd-display ,sysd-verb (car (split-string candidate)) ,isuser t))
+           (helm-marked-candidates))))
+
+
+
 (defun helm-systemd-build-source ()
   (helm-build-sync-source "systemd"
     :candidates (lambda ()
                   (reverse (helm-systemd-get-canditates "") ))
     :action (helm-make-actions
-             "Print"   (lambda (candidate)
-                         (helm-systemd-display "status" (car (split-string candidate)) nil t))
-             "Restart" (lambda (candidate)
-                         (helm-systemd-display "restart" (car (split-string candidate)) nil t))
-             "Stop"    (lambda (candidate)
-                         (helm-systemd-display "stop" (car (split-string candidate)) nil t))
-             "Start"   (lambda (candidate)
-                         (helm-systemd-display "start" (car (split-string candidate)) nil t)))
+             "Print"   (helm-systemd-make-actions "status" nil)
+             "Restart" (helm-systemd-make-actions "restart" nil)
+             "Stop"    (helm-systemd-make-actions "stop" nil)
+             "Start"   (helm-systemd-make-actions "start" nil))
     :persistent-action #'helm-system-persis-action
     :persistent-help "Show unit status"
     :keymap helm-systemd-map
@@ -248,14 +256,10 @@
     :candidates   (lambda ()
                     (reverse (helm-systemd-get-canditates "--user")))
     :action (helm-make-actions
-             "Print"   (lambda (candidate)
-                         (helm-systemd-display "status" (car (split-string candidate)) t t))
-             "Restart" (lambda (candidate)
-                         (helm-systemd-display "restart" (car (split-string candidate)) t t))
-             "Stop"    (lambda (candidate)
-                         (helm-systemd-display "stop" (car (split-string candidate)) t t))
-             "Start"   (lambda (candidate)
-                         (helm-systemd-display "start" (car (split-string candidate)) t t))
+             "Print"   (helm-systemd-make-actions "status" t)
+             "Restart" (helm-systemd-make-actions "restart" t)
+             "Stop"    (helm-systemd-make-actions "stop" t)
+             "Start"   (helm-systemd-make-actions "start" nil)
              "Edit with Emacs"   (lambda (candidate)
                                    (add-to-list 'with-editor-envvars "SYSTEMD_EDITOR" t)
                                    (add-to-list 'auto-mode-alist '("\\.#.*\\.service.*\\'" . systemd-mode))
@@ -273,6 +277,7 @@
    :sources (mapcar (lambda (func)
                       (funcall func))
                     '(helm-systemd-build-source helm-systemd-build-source-user))
+   :truncate-lines t
    :buffer
    (concat "*helm systemd*")) )
 
