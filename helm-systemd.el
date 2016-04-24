@@ -4,7 +4,7 @@
 
 ;; Author:  <lompik@oriontabArch>
 ;; Package-Version: 0.0.1
-;; Package-Requires: ((emacs "24.4") (helm "1.9.2") (with-editor "20160408.201"))
+;; Package-Requires: ((emacs "24.4") (helm "1.9.2") (with-editor "2.5.0"))
 ;; Keywords: convenience
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -26,7 +26,7 @@
 
 ;;; Code:
 
-(require 'cl)
+(require 'cl-lib)
 (require 'helm)
 (require 'with-editor)
 (require 'subr-x)
@@ -57,32 +57,32 @@
 
 (add-to-list 'auto-mode-alist `(, (concat (regexp-quote helm-systemd-buffer-name) "\\'") . helm-systemd-status-mode))
 
-(defun sysd-command-line-option ()
+(defun helm-systemd-command-line-option ()
   (concat "--no-pager --no-legend -t " (car helm-systemd-command-types) (if helm-systemd-list-all " --all")))
 
-(defvar helm-sysd-map
+(defvar helm-systemd-map
   (let ((map (make-sparse-keymap)))
     (set-keymap-parent map helm-map)
     (define-key map (kbd "<C-return>")    'helm-cr-empty-string)
     (define-key map (kbd "<M-RET>")       'helm-cr-empty-string)
-    (define-key map (kbd "C-]")           'helm-sysd-next-type)
-    (define-key map (kbd "C-[")           'helm-sysd-prev-type)
+    (define-key map (kbd "C-]")           'helm-systemd-next-type)
+    (define-key map (kbd "C-[")           'helm-systemd-prev-type)
 
     (delq nil map))
-  "Keymap for `helm-sysd-name'.")
+  "Keymap for `helm-systemd'.")
 
-(defun concatspace (word-list)
+(defun helm-systemd-concatspace (word-list)
   "Concatenate list of string with spaces as separator"
   (mapconcat 'identity
              (delq nil word-list)
              " "))
 
-(defun sysd-systemctl-command (&rest args)
+(defun helm-systemd-systemctl-command (&rest args)
   "Construct string with: 'systemctl default-args' ARGS"
-  (concatspace (push (concat "systemctl " (sysd-command-line-option))
-                     args) ))
+  (helm-systemd-concatspace (push (concat "systemctl " (helm-systemd-command-line-option))
+                                  args) ))
 
-(defun get-sd-canditates (sysd-options)
+(defun helm-systemd-get-canditates (sysd-options)
   "Return a list of systemd service unit"
   (let* ((result ())
          (leftcolumnwidth
@@ -90,7 +90,7 @@
          (hash (make-hash-table
                 :test 'equal))
          (sysd-lu (shell-command-to-string
-                   (sysd-systemctl-command " list-units " sysd-options)))
+                   (helm-systemd-systemctl-command " list-units " sysd-options)))
          (sysd-lu (delete ""
                           (split-string sysd-lu
                                         "\n"))))
@@ -99,7 +99,7 @@
           sysd-lu)
     (if helm-systemd-list-not-loaded
         (let* ((sysd-luf (shell-command-to-string
-                          (sysd-systemctl-command " list-unit-files " sysd-options)))
+                          (helm-systemd-systemctl-command " list-unit-files " sysd-options)))
                (sysd-luf (delete ""
                                  (split-string sysd-luf "\n"))))
           (mapc (lambda (line-luf)
@@ -127,11 +127,11 @@
 
     result ))
 
-(defun  sysd-display (unit-command unit &optional isuser nodisplay)
+(defun  helm-systemd-display (unit-command unit &optional isuser nodisplay)
   (with-current-buffer (get-buffer-create helm-systemd-buffer-name)
     (helm-systemd-status-mode)
     (let ((command
-           (sysd-systemctl-command (if isuser "--user") unit-command  unit)))
+           (helm-systemd-systemctl-command (if isuser "--user") unit-command  unit)))
       (insert "\n🔜 " command "\n")
       (if (or isuser (string= unit-command "status"))
           (insert  (shell-command-to-string command))
@@ -145,7 +145,7 @@
     (unless nodisplay
       (display-buffer (current-buffer)))))
 
-(defun helm-sysd-next-type ()
+(defun helm-systemd-next-type ()
   (interactive)
   (setq helm-systemd-command-types
         (append (cdr helm-systemd-command-types)
@@ -153,7 +153,7 @@
   (with-helm-alive-p
     (helm-force-update )))
 
-(defun helm-sysd-prev-type ()
+(defun helm-systemd-prev-type ()
   (interactive)
   (setq helm-systemd-command-types
         (append (last helm-systemd-command-types)
@@ -162,12 +162,12 @@
   (with-helm-alive-p
     (helm-force-update )))
 
-(defun sysD-persis-action (line &optional isuser)
+(defun helm-system-persis-action (line &optional isuser)
   "Show unit status"
   (let ((unit (car (split-string line))))
-    (sysd-display "status" unit isuser )))
+    (helm-systemd-display "status" unit isuser )))
 
-(defun sysd-transformer (candidates source)
+(defun helm-systemd-transformer (candidates source)
   (let ((res candidates))
     (unless (string= (car helm-systemd-command-types) "device")
 
@@ -177,18 +177,18 @@
                          for loaded = (nth 1 split)
                          for active = (nth 2 split)
                          for running = (nth 3 split)
-                         for description = (if running (concatspace (subseq split 4)))
+                         for description = (if running (helm-systemd-concatspace (subseq split 4)))
                          collect (let ((line i))
                                    (unless (and unit loaded active running description)
                                      line)
                                    (if (and loaded (not (string= (car helm-systemd-command-types) "mount")))
                                        (let* ((isenabled (car (split-string
                                                                (shell-command-to-string
-                                                                (concatspace `("systemctl" "is-enabled "
-                                                                               ,(if (string-match "User"
-                                                                                                  (cdr (assoc 'name source)))
-                                                                                    "--user")
-                                                                               ,unit))))))
+                                                                (helm-systemd-concatspace `("systemctl" "is-enabled "
+                                                                                            ,(if (string-match "User"
+                                                                                                               (cdr (assoc 'name source)))
+                                                                                                 "--user")
+                                                                                            ,unit))))))
                                               (propena (cond ((string= isenabled "enabled") 'helm-bookmark-info)
                                                              ((string= isenabled "static") 'helm-bookmark-gnus)
                                                              (t 'helm-bookmark-gnus)))
@@ -225,46 +225,46 @@
                                    line ))))
     res))
 
-(defun sysd-build-source ()
+(defun helm-systemd-build-source ()
   (helm-build-sync-source "systemd"
     :candidates (lambda ()
-                  (reverse (get-sd-canditates "") ))
+                  (reverse (helm-systemd-get-canditates "") ))
     :action (helm-make-actions
              "Print"   (lambda (candidate)
-                         (sysd-display "status" (car (split-string candidate)) nil t))
+                         (helm-systemd-display "status" (car (split-string candidate)) nil t))
              "Restart" (lambda (candidate)
-                         (sysd-display "restart" (car (split-string candidate)) nil t))
+                         (helm-systemd-display "restart" (car (split-string candidate)) nil t))
              "Stop"    (lambda (candidate)
-                         (sysd-display "stop" (car (split-string candidate)) nil t))
+                         (helm-systemd-display "stop" (car (split-string candidate)) nil t))
              "Start"   (lambda (candidate)
-                         (sysd-display "start" (car (split-string candidate)) nil t)))
-    :persistent-action #'sysD-persis-action
+                         (helm-systemd-display "start" (car (split-string candidate)) nil t)))
+    :persistent-action #'helm-system-persis-action
     :persistent-help "Show unit status"
-    :keymap helm-sysd-map
-    :filtered-candidate-transformer #'sysd-transformer))
+    :keymap helm-systemd-map
+    :filtered-candidate-transformer #'helm-systemd-transformer))
 
-(defun sysd-build-source-user ()
+(defun helm-systemd-build-source-user ()
   (helm-build-sync-source "Systemd User"
     :candidates   (lambda ()
-                    (reverse (get-sd-canditates "--user")))
+                    (reverse (helm-systemd-get-canditates "--user")))
     :action (helm-make-actions
              "Print"   (lambda (candidate)
-                         (sysd-display "status" (car (split-string candidate)) t t))
+                         (helm-systemd-display "status" (car (split-string candidate)) t t))
              "Restart" (lambda (candidate)
-                         (sysd-display "restart" (car (split-string candidate)) t t))
+                         (helm-systemd-display "restart" (car (split-string candidate)) t t))
              "Stop"    (lambda (candidate)
-                         (sysd-display "stop" (car (split-string candidate)) t t))
+                         (helm-systemd-display "stop" (car (split-string candidate)) t t))
              "Start"   (lambda (candidate)
-                         (sysd-display "start" (car (split-string candidate)) t t))
+                         (helm-systemd-display "start" (car (split-string candidate)) t t))
              "Edit with Emacs"   (lambda (candidate)
                                    (add-to-list 'with-editor-envvars "SYSTEMD_EDITOR" t)
                                    (add-to-list 'auto-mode-alist '("\\.#.*\\.service.*\\'" . systemd-mode))
                                    (with-editor-async-shell-command (concat "systemctl --user --full edit " (car (split-string candidate))) )))
-    :persistent-action (lambda (line) (funcall #'sysD-persis-action line t))
+    :persistent-action (lambda (line) (funcall #'helm-system-persis-action line t))
     :persistent-help "Show unit status"
-    :keymap helm-sysd-map
+    :keymap helm-systemd-map
 
-    :filtered-candidate-transformer #'sysd-transformer))
+    :filtered-candidate-transformer #'helm-systemd-transformer))
 
 ;;;###autoload
 (defun helm-systemd ()
@@ -272,7 +272,7 @@
   (helm
    :sources (mapcar (lambda (func)
                       (funcall func))
-                    '(sysd-build-source sysd-build-source-user))
+                    '(helm-systemd-build-source helm-systemd-build-source-user))
    :buffer
    (concat "*helm systemd*")) )
 
