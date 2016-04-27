@@ -185,18 +185,22 @@
                                    (unless (and unit loaded active running description)
                                      line)
                                    (if (and loaded (not (string= (car helm-systemd-command-types) "mount")))
-                                       (let* ((isenabled (car (split-string
-                                                               (shell-command-to-string
-                                                                (helm-systemd-concatspace `("systemctl" "is-enabled "
-                                                                                            ,(if (string-match "User"
-                                                                                                               (cdr (assoc 'name source)))
-                                                                                                 "--user")
-                                                                                            ,unit))))))
+                                       (let* ((isenabled
+                                               (car
+                                                (split-string
+                                                 (shell-command-to-string
+                                                  (helm-systemd-concatspace `("systemctl" "is-enabled "
+                                                                              ,(if (string-match "User"
+                                                                                                 (cdr (assoc 'name source)))
+                                                                                   "--user")
+                                                                              ,unit))))))
                                               (propena (cond ((string= isenabled "enabled") 'helm-bookmark-info)
                                                              ((string= isenabled "static") 'helm-bookmark-gnus)
                                                              (t 'helm-bookmark-gnus)))
                                               (isenabled (format "%8s" isenabled) ))
-                                         (setq line (replace-regexp-in-string loaded (concat (propertize isenabled 'face propena) " " loaded " ") line ))))
+                                         (setq line (if active
+                                                        (replace-regexp-in-string loaded (concat (propertize isenabled 'face propena) " " loaded " ") line )
+                                                      (replace-regexp-in-string loaded (concat (propertize isenabled 'face propena) " ") line ))))) ;; list-units case
                                    (if (string=  running "running")
                                        (setq line
                                              (replace-regexp-in-string running
