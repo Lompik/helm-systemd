@@ -266,7 +266,6 @@
              "Start"   (helm-systemd-make-actions "start" nil)
              "Edit with Emacs"   (lambda (candidate)
                                    (add-to-list 'with-editor-envvars "SYSTEMD_EDITOR" t)
-                                   (add-to-list 'auto-mode-alist '("\\.#.*\\.service.*\\'" . systemd-mode))
                                    (with-editor-async-shell-command (concat "systemctl --user --full edit " (car (split-string candidate))) )))
     :persistent-action (lambda (line) (funcall #'helm-system-persis-action line t))
     :persistent-help "Show unit status"
