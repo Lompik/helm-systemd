@@ -37,6 +37,12 @@
 (defvar helm-systemd-buffer-name "*Helm systemd log*")
 (defvar helm-systemd-status-mode-hook nil )
 
+(defconst helm-systemd-actions-list
+  '(("print". "Printed")
+    ("restart". "Restarted")
+    ("stop" ."Stopped")
+    ("start". "Started")))
+
 (defvar helm-systemd-status-font-lock-keywords
   `(("\\(Loaded\\|Active\\|Status\\|Docs\\|Process\\|Main PID\\|Tasks\\|CGroup\\):" (1 'helm-bookmark-gnus) )
     ("active (running)" 0 'hi-green)
@@ -235,8 +241,11 @@
 (defmacro helm-systemd-make-actions (sysd-verb isuser)
   `(lambda (_ignore)
      (mapc (lambda (candidate)
-             (message candidate)
-             (helm-systemd-display ,sysd-verb (car (split-string candidate)) ,isuser t))
+             (helm-systemd-display ,sysd-verb (car (split-string candidate)) ,isuser t)
+             (message (concat
+                       (cdr (assoc ,sysd-verb helm-systemd-actions-list))
+                       " "
+                       (car (split-string candidate)))))
            (helm-marked-candidates))))
 
 
