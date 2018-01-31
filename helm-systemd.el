@@ -137,7 +137,7 @@
   (with-current-buffer (get-buffer-create helm-systemd-buffer-name)
     (helm-systemd-status-mode)
     (let ((command
-           (helm-systemd-systemctl-command (if isuser "--user") unit-command  unit)))
+           (helm-systemd-systemctl-command (if isuser "--user") unit-command "--" unit)))
       (insert "\n🔜 " command "\n")
       (if (or isuser (string= unit-command "status"))
           (insert  (shell-command-to-string command))
