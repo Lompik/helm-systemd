@@ -190,13 +190,14 @@
                      (if loaded
                          (let* ((isenabled
                                  (car
-                                  (split-string
-                                   (shell-command-to-string
-                                    (helm-systemd-concatspace `("systemctl" "is-enabled "
-                                                                ,(if (string-match "User"
-                                                                                   (cdr (assoc 'name source)))
-                                                                     "--user")
-                                                                "--" ,unit))))))
+                                  (last
+                                   (split-string
+                                    (shell-command-to-string
+                                     (helm-systemd-concatspace `("systemctl" "is-enabled "
+                                                                 ,(if (string-match "User"
+                                                                                    (cdr (assoc 'name source)))
+                                                                      "--user")
+                                                                 "--" ,unit)))))))
                                 (propena (cond ((string= isenabled "enabled") 'helm-bookmark-info)
                                                ((string= isenabled "static") 'helm-bookmark-gnus)
                                                (t 'helm-bookmark-gnus)))
