@@ -231,7 +231,7 @@
                                                          (propertize
                                                           running
                                                           'face
-                                                          'diredp-executable-tag) line nil t)))
+                                                          'dired-warning) line nil t)))
                      (if description
                          (setq line
                                (replace-regexp-in-string
