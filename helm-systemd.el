@@ -52,7 +52,7 @@
     ("[fF]ailed" 0 'diredp-executable-tag)
 
     ("─\\([0-9]+\\)"  (1 'helm-bookmark-info))     ; PIDs
-    ("[●🔜] .*"  0 'helm-buffer-file) ; command lines ●🔜
+    ("[●↳] .*"  0 'helm-buffer-file) ; command lines ●↳
     "Default expressions to highlight in `helm systemd log'."))
 
 (define-derived-mode helm-systemd-status-mode fundamental-mode "Systemd-log"
@@ -138,7 +138,7 @@
     (helm-systemd-status-mode)
     (let ((command
            (helm-systemd-systemctl-command (if isuser "--user") unit-command "--" unit)))
-      (insert "\n🔜 " command "\n")
+      (insert "\n↳ " command "\n")
       (if (or isuser (string= unit-command "status"))
           (insert  (shell-command-to-string command))
         (with-temp-buffer
